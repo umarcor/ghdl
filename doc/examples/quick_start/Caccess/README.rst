@@ -13,7 +13,7 @@ in a package. Each function's `foreign` attribute is set to highlight that the f
 
 This example starts with :file:`c_access.vhdl`:
 
-.. literalinclude:: c_access.vhd
+.. literalinclude:: cAccess.vhd
    :language: vhdl
 
 Assuming, for now, that these foreign functions perform as their names indicate they should, the toplevel test bench is defined next (:file:`toplevel.vhdl`):
