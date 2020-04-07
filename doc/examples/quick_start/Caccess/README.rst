@@ -49,7 +49,7 @@ Compilation
 -----------
 
 - Firstly, the HDL files must be analysed by GHDL, producing object files for each (:ref:`Analysis:command`). 
-- Before the elaboration step, the object files for each `.c` file used is needed, so compile each with `gcc -c main.c -o main.o`.
+- Before the elaboration step, the object files of all `.c` files being used are needed, so compile each with `gcc -c main.c -o main.o`.
 - Elaborate with each C-side object file and finally the name of the toplevel entity. See :ref:`Starting_a_simulation_from_a_foreign_program` and :ref:`Linking_with_foreign_object_files`.
     - The elaboration step is only possible with a GCC or LLVM backend. See :ref:`Elaboration:command`.
 - Execute the produced executable.
