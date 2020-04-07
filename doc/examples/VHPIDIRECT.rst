@@ -16,3 +16,14 @@ ghdlex and netpp
 `ghdlex <https://github.com/hackfin/ghdlex>`_ is a set of C extensions to facilitate data exchange between a GHDL simulation and external applications. VHPIDIRECT mechanisms are used to wrap GHDL data types into structures usable from a C library. `ghdlex` uses the `netpp <https://section5.ch/index.php/netpp/>`_ library to expose virtual entities (such as pins or RAM) to the network. It also demonstrates simple data I/O through unix pipes. A few VHDL example entities are provided, such as a virtual console, FIFOs, RAM.
 
 The author of `netpp` and `ghdlex` is also working on `MaSoCist <https://github.com/hackfin/MaSoCist>`_, a linux'ish build system for System on Chip designs, based on GHDL. It allows to handle more complex setup, e.g. how a RISC-V architecture (for example) is regress-tested using a virtual debug interface.
+
+SystemC and VHDL mixed simulation
+=================================
+
+There is an example under `Demo of mixed vhdl + systemc simulation <https://github.com/ghdl/ghdl-systemc-fosdem16>`_.
+
+
+Examples Collection
+===================
+
+Past the examples under :ref:`USING:QuickStart:` there is a collection of GHDL use cases under eine's `hwd-ide <https://github.com/eine/hwd-ide/tree/develop/examples>`_.
