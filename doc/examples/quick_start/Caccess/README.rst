@@ -45,6 +45,9 @@ These are also exposed to the custom entry point in :file:`main.c`:
 It is seen that the array's length is established, and its contents filled with square numbers, before the GHDL simulation happens. 
 After that, the array is read out.
 
+.. TIP::
+    To pass GHDL runtime options, see the second hint under :ref:`Starting_a_simulation_from_a_foreign_program`.
+
 Compilation
 -----------
 
