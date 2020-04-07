@@ -13,12 +13,12 @@ in a package. Each function's `foreign` attribute is set to highlight that the f
 
 This example starts with :file:`c_access.vhdl`:
 
-.. literalinclude:: c_access.vhdl
+.. literalinclude:: c_access.vhd
    :language: vhdl
 
 Assuming, for now, that these foreign functions perform as their names indicate they should, the toplevel test bench is defined next (:file:`toplevel.vhdl`):
 
-.. literalinclude:: toplevel.vhdl
+.. literalinclude:: toplevel.vhd
    :language: vhdl
 
 Perhaps this example's flow is clearer by now: the testbench will use an integer array from C, the size of which is defined in C. 
@@ -26,13 +26,16 @@ It will use a C-side function to prompt the user to set the value for index zero
 Then the user is prompted to conclude the simulation or repeat the process.
 
 
-The C functions and variables that GHDL accesses are kept in a separate pair (:file:`cSharedVar.h`, :file:`cSharedVar.c`):
+The C functions and variables that GHDL accesses are kept in a separate header/code pair. :file:`cSharedVar.h`:
 
 .. literalinclude:: cSharedVar.h
    :language: c
 
+And :file:`cSharedVar.c`:
+
 .. literalinclude:: cSharedVar.c
    :language: c
+
 
 These are also exposed to the custom entry point in :file:`main.c`:
 
