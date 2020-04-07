@@ -9,12 +9,14 @@ The files
 
 The VHPIDIRECT method of accessing C-side variables and functions from VHDL requires these variables and functions to be declared
 in a package. Each function's `foreign` attribute is set to highlight that the function has a foreign C-side definition, as per
-:ref:`foreign_declarations`.
+:ref:`foreign_declarations`. 
+
+This example starts with :file:`c_access.vhdl`:
 
 .. literalinclude:: c_access.vhdl
    :language: vhdl
 
-Assuming, for now, that these foreign functions perform as their names indicate they should, the toplevel test bench is defined next.
+Assuming, for now, that these foreign functions perform as their names indicate they should, the toplevel test bench is defined next (:file:`toplevel.vhdl`):
 
 .. literalinclude:: toplevel.vhdl
    :language: vhdl
@@ -24,7 +26,7 @@ It will use a C-side function to prompt the user to set the value for index zero
 Then the user is prompted to conclude the simulation or repeat the process.
 
 
-The C functions and variables that GHDL accesses are kept in a separate .c/.h file:
+The C functions and variables that GHDL accesses are kept in a separate pair (:file:`cSharedVar.h`, :file:`cSharedVar.c`):
 
 .. literalinclude:: cSharedVar.h
    :language: c
@@ -32,10 +34,13 @@ The C functions and variables that GHDL accesses are kept in a separate .c/.h fi
 .. literalinclude:: cSharedVar.c
    :language: c
 
-These are also exposed to the custom entry point in main.c:
+These are also exposed to the custom entry point in :file:`main.c`:
 
 .. literalinclude:: main.c
    :language: c
+
+It is seen that the array's length is established, and its contents filled with square numbers, before the GHDL simulation happens. 
+After that, the array is read out.
 
 Compilation
 -----------
@@ -46,27 +51,7 @@ Compilation
     - The elaboration step is only possible with a GCC or LLVM backend. See :ref:`Elaboration:command`.
 - Execute the produced executable.
 
-The compilation steps should look something like:
+The compilation steps should look something like :file:`build.sh`:
 
--- literalinclude:: build.sh
+.. literalinclude:: build.sh
     :language: sh
-
-.. code-block:: shell
-
-  Hello world!
-
-.. HINT::
-   If a GCC/LLVM variant of `GHDL` is used:
-
-   * :ref:`Analysis <Analysis:command>` generates a file, :file:`hello.o`, which is the object file corresponding to
-     your `VHDL` program. This is not created with :ref:`mcode <BUILD>`. These kind of object files can be
-     compiled into foreign programs (see :ref:`Linking_with_Ada`).
-   * The :ref:`elaboration <Elaboration:command>` step is mandatory after running the analysis and prior to launching the
-     simulation. This will generate an executable binary named :file:`hello_world`.
-   * As a result, :option:`-r` is just a passthrough to the binary generated in the `elaboration`. Therefore, the
-     executable can be run directly: ``./hello_world``. See :option:`-r` for more informartion.
-
-.. HINT::
-
-   :option:`-e` can be bypassed with :ref:`mcode <BUILD>`, since :option:`-r` actually elaborates the design and saves
-   it on memory before running the simulation. But you can still use it to check for some elaboration problems.
