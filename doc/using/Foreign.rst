@@ -24,6 +24,8 @@ You can define a subprogram in a foreign language (such as `C` or
    inspect the hierarchy, set callbacks and/or assign signals. GHDL does not support VHPI. For these kind of features, it is
    suggested to use VPI instead (see :ref:`VPI_build_commands`).
 
+.. _foreign_declarations:
+
 Foreign declarations
 ====================
 
@@ -144,7 +146,10 @@ in C:
   extern int ghdl_main (int argc, char **argv);
 
 .. HINT::
-   To compile the executable with the custom `main()`, its object file will have to be listed in the elaboration step. Analysis must be made of the HDL files, then elaboration with `-Wl,main.o toplevelEntityName` as arguments. Additional object files are flagged separate `-Wl,*` arguments. The elaboration step will compile the executable with the custom `main()` entrypoint.
+   To compile the executable with the custom `main()`, its object file will have to be listed in the elaboration step. 
+   Analysis must be made of the HDL files, then elaboration with `-Wl,main.o toplevelEntityName` as arguments. 
+   Additional object files are flagged separate `-Wl,*` arguments as per :ref:`Linking_with_foreign_object_files`. 
+   The elaboration step will compile the executable with the custom `main()` entrypoint.
    Further reading (particularly about the backend restrictions) is at , :ref:`Elaboration:command` and :ref:`Run:command`.
 
 .. HINT::
