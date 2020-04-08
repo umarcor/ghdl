@@ -35,7 +35,8 @@ void testCinterface(
   ghdl_NaturalDimArr_t* v_vec_phy,
   ghdl_NaturalDimArr_t* v_vec_rec,
   ghdl_NaturalDimArr_t* v_vec_enum,
-  ghdl_NaturalDimArr_t* v_2vec_real
+  ghdl_NaturalDimArr_t* v_2vec_real,
+  ghdl_Natural2DimArr_t* v_mat_int
 ) {
   assert(v_logic == HDL_H);
   printf("v_logic  : %c\n", HDL_LOGIC_STATE[v_logic]);
@@ -147,6 +148,22 @@ void testCinterface(
   assert(vec2_real[1][1] == 4.25);
   assert(vec2_real[1][2] == 5.0);
   printf("v_2vec_real : %p [%d, %d]\n", vec_enum, len[1], len[0]);
+
+  printf("\nVerify GHDL Matrix in C\n");
+  //print2d(v_mat_int);
+  int* len2 = malloc(2 * sizeof(int));
+
+  int32_t* mat_int;
+  ghdlToArray(v_mat_int, (void**)&mat_int, len2, 2);
+  for (int i = 0; i < len2[1]; i++)
+  {
+    for (int j = 0; j < len2[0]; j++)
+    { 
+      printf("C assert: %d == (val: %d) @ [%d,%d](%d)\n", 11*(i*len2[0]+j+1), mat_int[i*len2[1]+j], i, j, i*len2[1]+j);
+      assert(mat_int[i*len2[0]+j] == 11*(i*len2[0]+j+1));
+    }
+  }
+  printf("v_mat_int  : %p [%d,%d]\n\n", mat_int, len2[0], len2[1]);
 }
 
 void getString(ghdl_NaturalDimArr_t* ptr) {
@@ -157,10 +174,42 @@ void getIntVec(ghdl_NaturalDimArr_t* ptr) {
   int32_t vec[6] = {11, 22, 33, 44, 55};
   int32_t len[1] = {5};
   int x;
-  for ( x=0 ; x<len[0] ; x++ ) {
-    printf("%d: %d\n", x, vec[x]);
-  }
   *ptr = ghdlFromArray(vec, len, 1);
+  printf("\n1D Array values [%d]:\n", len[0]);
+  for ( x=0 ; x<len[0] ; x++ ) {
+    printf("[%d]: %d\n", x, vec[x]);
+  }
+}
+
+int getFlatArrayIndex(int* dimIndex, int* lens, int dims){
+  if(dims == 1){
+    return dimIndex[0];
+  }
+  else{
+    return dimIndex[dims-1] + (lens[dims-1]*getFlatArrayIndex(dimIndex, lens, dims-1));
+  }
+}
+
+void getIntMat(ghdl_Natural2DimArr_t* ptr){
+  int32_t mat[2][3];
+  int32_t len[2] = {2, 3};
+  int x, y;
+  for ( x=0 ; x<len[0] ; x++ ) {
+    for ( y=0 ; y<len[1] ; y++ ) {
+      int ind[] = {x, y};
+      int flatIndex = getFlatArrayIndex(ind, len, 2);
+      mat[x][y] = 11*(flatIndex+1);
+    }
+  }
+  *ptr = ghdlFromArray2d(mat, len, 2);
+  printf("\n2D Array values [%d,%d]:\n", len[0], len[1]);
+  for ( x=0 ; x<len[0] ; x++ ) {
+    for ( y=0 ; y<len[1] ; y++ ) {
+      printf("mat[%d][%d] = %d\t", x, y, mat[x][y]);
+    }
+    printf("\n");
+  }
+  printf("\n");
 }
 
 ghdl_AccNaturalDimArr_t* getLine() {
