@@ -221,4 +221,23 @@ ghdl_AccNaturalDimArr_t* ghdlAccFromString(char *string) {
   return line;
 }
 
+/*  
+*   Handle C char for the appropriate values in std_ulogic and std_logic.
+*/
+
+// @RocketRoss
+static const char HDL_LOGIC_STATE[] = { 'U', 'X', '0', '1', 'Z', 'W', 'L', 'H', '-'};
+
+enum HDL_LOGIC_CHAR {
+HDL_U = 0,
+HDL_X = 1,
+HDL_0 = 2,
+HDL_1 = 3,
+HDL_Z = 4,
+HDL_W = 5,
+HDL_L = 6,
+HDL_H = 7,
+HDL_D = 8,
+};
+
 #endif
