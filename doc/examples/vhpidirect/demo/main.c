@@ -65,7 +65,7 @@ void testCinterface(
   printf("v_bit  : %d\n", v_bit);
 
   assert(v_time == 20e6);
-  printf("v_time : %d\n", v_time);
+  printf("v_time : %ld\n", v_time);
 
   assert(v_rec != NULL);
   assert(v_rec->r_char == 'y');
@@ -76,7 +76,7 @@ void testCinterface(
   printf("v_enum : %d %d\n", v_enum, busy);
 
   char* str = ghdlToString(v_str);
-  printf("v_str  : %p '%s' [%d]\n", v_str->array, str, strlen(str));
+  printf("v_str  : %p '%s' [%ld]\n", v_str->array, str, strlen(str));
 
   int* len = malloc(2 * sizeof(int));
 
