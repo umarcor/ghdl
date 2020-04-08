@@ -160,7 +160,7 @@ void testCinterface(
   printf("v_2vec_real : %p [%d, %d]\n", vec_enum, len[1], len[0]);
 
   printf("\nVerify GHDL Matrix in C\n");
-  //print2d(v_mat_int);
+  printAttributes(v_mat_int, 2);
   int* len2 = malloc(2 * sizeof(int));
 
   int32_t* mat_int;
@@ -178,7 +178,7 @@ void testCinterface(
   printf("v_mat_int  : %p [%d,%d]\n\n", mat_int, len2[0], len2[1]);
 
   printf("\nVerify the 3D GHDL array in C\n");
-  //print3d(v_3d_int);
+  printAttributes(v_3d_int, 3);
   int* len3 = malloc(3 * sizeof(int));
 
   int32_t* d3_int;

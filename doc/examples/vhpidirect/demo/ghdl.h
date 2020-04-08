@@ -30,15 +30,15 @@ typedef struct {
 *  Print custom types
 */
 
-void printUnconstrained(ghdl_NaturalDimArr_t* ptr, int dims) {
+void printAttributes(ghdl_NaturalDimArr_t* ptr, int dims) {
   printf("array: %p\n", ptr->array);
   printf("bounds: %p\n", ptr->bounds);
   int i;
   for(i = 0; i < dims; i++){
-    printf("bounds%d.left: %d\n", i, ptr->bounds[i].left);
-    printf("bounds%d.right: %d\n", i, ptr->bounds[i].right);
-    printf("bounds%d.dir: %d\n", i, ptr->bounds[i].dir);
-    printf("bounds%d.len: %d\n", i, ptr->bounds[i].len);
+    printf("bounds[%d].left: %d\n", i+1, ptr->bounds[i].left);
+    printf("bounds[%d].right: %d\n", i+1, ptr->bounds[i].right);
+    printf("bounds[%d].dir: %d\n", i+1, ptr->bounds[i].dir);
+    printf("bounds[%d].len: %d\n", i+1, ptr->bounds[i].len);
   }
 }
 
@@ -123,7 +123,7 @@ ghdl_NaturalDimArr_t ghdlFromString(char *string) {
 
 // @RocketRoss
 /*
-*   Helper to setup the bouds_t for ghdlFromArray
+*   Helper to setup the bounds_t for ghdlFromArray
 */
 
 void ghdlSetRange(range_t* r, int len, bool reversed){
