@@ -14,6 +14,15 @@ typedef struct rec_t {
 
 typedef enum {standby, start, busy, done} enum_t;
 
+int getFlatArrayIndex(int* dimIndex, int* lens, int dims){
+  if(dims == 1){
+    return dimIndex[0];
+  }
+  else{
+    return dimIndex[dims-1] + (lens[dims-1]*getFlatArrayIndex(dimIndex, lens, dims-1));
+  }
+}
+
 void testCinterface(
   char     v_logic,
   char     v_ulogic,
@@ -36,8 +45,8 @@ void testCinterface(
   ghdl_NaturalDimArr_t* v_vec_rec,
   ghdl_NaturalDimArr_t* v_vec_enum,
   ghdl_NaturalDimArr_t* v_2vec_real,
-  ghdl_Natural2DimArr_t* v_mat_int,
-  ghdl_Natural3DimArr_t* v_3d_int
+  ghdl_NaturalDimArr_t* v_mat_int,
+  ghdl_NaturalDimArr_t* v_3d_int
 ) {
   assert(v_logic == HDL_H);
   printf("v_logic  : %c\n", HDL_LOGIC_STATE[v_logic]);
@@ -207,16 +216,7 @@ void getIntVec(ghdl_NaturalDimArr_t* ptr) {
   }
 }
 
-int getFlatArrayIndex(int* dimIndex, int* lens, int dims){
-  if(dims == 1){
-    return dimIndex[0];
-  }
-  else{
-    return dimIndex[dims-1] + (lens[dims-1]*getFlatArrayIndex(dimIndex, lens, dims-1));
-  }
-}
-
-void getIntMat(ghdl_Natural2DimArr_t* ptr){
+void getIntMat(ghdl_NaturalDimArr_t* ptr){
   int32_t mat[2][3];
   int32_t len[2] = {2, 3};
   int x, y;
@@ -227,7 +227,7 @@ void getIntMat(ghdl_Natural2DimArr_t* ptr){
       mat[x][y] = 11*(flatIndex+1);
     }
   }
-  *ptr = ghdlFromArray2d(mat, len, 2);
+  *ptr = ghdlFromArray(mat, len, 2);
   printf("\n2D Array values [%d,%d]:\n", len[0], len[1]);
   for ( x=0 ; x<len[0] ; x++ ) {
     for ( y=0 ; y<len[1] ; y++ ) {
@@ -237,7 +237,7 @@ void getIntMat(ghdl_Natural2DimArr_t* ptr){
   }
 }
 
-void getInt3d(ghdl_Natural3DimArr_t* ptr){
+void getInt3d(ghdl_NaturalDimArr_t* ptr){
   int32_t d3[2][4][3];
   int32_t len[3] = {2, 4, 3};
   int x, y, z;
@@ -250,7 +250,7 @@ void getInt3d(ghdl_Natural3DimArr_t* ptr){
       }
     }
   }
-  *ptr = ghdlFromArray3d(d3, len, 3);
+  *ptr = ghdlFromArray(d3, len, 3);
   printf("\n3D Array values [%d,%d,%d]:\n", len[0], len[1], len[2]);
   for ( x=0 ; x<len[0] ; x++ ) {
     for ( y=0 ; y<len[1] ; y++ ) {
