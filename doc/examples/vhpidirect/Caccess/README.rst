@@ -1,5 +1,5 @@
 .. program:: ghdl
-.. _QuickStart:C_Access:
+.. _VHPIDIRECT_Example:C_Access:
 
 `C Access` example
 =====================

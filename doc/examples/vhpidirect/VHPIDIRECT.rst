@@ -6,7 +6,10 @@ Data exchange through VHPIDIRECT
 .. toctree::
    :hidden:
 
+   Caccess/README
    demo/README
+
+:ref:`VHPIDIRECT_Example:C_Access` is a straight forward example of executing the GHDL simulation from a personal entry point, while accessing variables (an int, int array and char).
 
 See :ref:`Examples:VHPIDIRECT:Demo` for a demo about how to pass different types of data to/from VHDL and C through VHPIDIRECT.
 
