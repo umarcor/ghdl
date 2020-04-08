@@ -1,5 +1,8 @@
 use std.textio.line;
 
+library ieee;
+use ieee.std_logic_1164.all;
+
 entity tb is
 end;
 
@@ -25,6 +28,8 @@ begin
   process
 
     procedure testCinterface(
+      v_logic     : std_logic   := 'H';
+      v_ulogic    : std_ulogic  := 'Z';
       v_char      : character   := 'k';
       v_int       : integer     := -6;
       v_nat       : natural     := 9;
@@ -68,6 +73,8 @@ begin
   begin
 
     testCinterface(
+      v_logic     => 'H',
+      v_ulogic    => 'Z',
       v_char      => 'k',
       v_int       => -6,
       v_nat       => 9,

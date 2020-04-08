@@ -15,6 +15,8 @@ typedef struct rec_t {
 typedef enum {standby, start, busy, done} enum_t;
 
 void testCinterface(
+  char     v_logic,
+  char     v_ulogic,
   char     v_char,
   int32_t  v_int,
   uint32_t v_nat,
@@ -35,6 +37,12 @@ void testCinterface(
   ghdl_NaturalDimArr_t* v_vec_enum,
   ghdl_NaturalDimArr_t* v_2vec_real
 ) {
+  assert(v_logic == HDL_H);
+  printf("v_logic  : %c\n", HDL_LOGIC_STATE[v_logic]);
+
+  assert(v_ulogic == HDL_Z);
+  printf("v_ulogic : %c\n", HDL_LOGIC_STATE[v_ulogic]);
+
   assert(v_char == 'k');
   printf("v_char : %c\n", v_char);
 
