@@ -156,12 +156,14 @@ void testCinterface(
 
   int32_t* mat_int;
   ghdlToArray(v_mat_int, (void**)&mat_int, len2, 2);
-  for (int i = 0; i < len2[1]; i++)
+  for (int i = 0; i < len2[0]; i++)
   {
-    for (int j = 0; j < len2[0]; j++)
+    for (int j = 0; j < len2[1]; j++)
     { 
-      printf("C assert: %d == (val: %d) @ [%d,%d](%d)\n", 11*(i*len2[0]+j+1), mat_int[i*len2[1]+j], i, j, i*len2[1]+j);
-      assert(mat_int[i*len2[0]+j] == 11*(i*len2[0]+j+1));
+      int ind[] = {i, j};
+      int flatIndex = getFlatArrayIndex(ind, len2, 2);
+      printf("C assert: %d == (val: %d) @ [%d,%d](%d)\n", 11*(flatIndex+1), mat_int[flatIndex], i, j, flatIndex);
+      assert(mat_int[flatIndex] == 11*(flatIndex+1));
     }
   }
   printf("v_mat_int  : %p [%d,%d]\n\n", mat_int, len2[0], len2[1]);
@@ -178,8 +180,10 @@ void testCinterface(
     {
       for (int k = 0; k < len3[2]; k++)
       { 
-        printf("C assert: %d == (val: %d) @ [%d,%d,%d](%d)\n", 11*(i*len3[1]*len3[2]+j*len3[2]+k+1), d3_int[i*len3[1]*len3[2]+j*len3[2]+k], i, j, k, i*len3[1]*len3[2]+j*len3[2]+k);
-        assert(d3_int[i*len3[1]*len3[2]+j*len3[2]+k] == 11*(i*len3[1]*len3[2]+j*len3[2]+k+1));
+        int ind[] = {i, j, k};
+        int flatIndex = getFlatArrayIndex(ind, len3, 3);
+        printf("C assert: %d == (val: %d) @ [%d,%d,%d](%d)\n", 11*(flatIndex+1), d3_int[flatIndex], i, j, k, flatIndex);
+        assert(d3_int[flatIndex] == 11*(flatIndex+1));
       }
     }
   }
