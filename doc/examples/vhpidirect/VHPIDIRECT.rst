@@ -36,4 +36,4 @@ There is an example under `Demo of mixed vhdl + systemc simulation <https://gith
 Examples Collection
 ===================
 
-Past the examples under :ref:`USING:QuickStart` there is a collection of GHDL use cases under eine's `hwd-ide <https://github.com/eine/hwd-ide/tree/develop/examples>`_.
+There is a collection of GHDL use cases under eine's `hwd-ide <https://github.com/eine/hwd-ide/tree/develop/examples>`_.
