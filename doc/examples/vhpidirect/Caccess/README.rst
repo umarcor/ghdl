@@ -8,8 +8,11 @@ The files
 ---------
 
 The VHPIDIRECT method of accessing C-side variables and functions from VHDL requires these variables and functions to be declared
-in a package. Each function's `foreign` attribute is set to highlight that the function has a foreign C-side definition, as per
+with the `foreign` attribute a certain way. It is set to highlight that the function has a foreign C-side definition, as per
 :ref:`foreign_declarations`. 
+
+The foreign functions can be declared HDL-side in a package as follows, or the declarative part of an architecture (as in :ref:`Examples:VHPIDIRECT:Demo`).
+The difference being the scope of the declarations.
 
 This example starts with :file:`c_access.vhdl`:
 
