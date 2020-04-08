@@ -166,3 +166,7 @@ void getIntVec(ghdl_NaturalDimArr_t* ptr) {
 ghdl_AccNaturalDimArr_t* getLine() {
   return ghdlAccFromString("HELLO WORLD");
 }
+
+int getLogicIntValue(char logic){
+  return 0 + logic;
+}

@@ -70,6 +70,18 @@ begin
 
     variable g_line: line := getLine;
 
+    function getLogicValue(logic : std_logic) return integer is
+    begin assert false report "VHPIDIRECT getLogicValue" severity failure; end;
+    attribute foreign of getLogicValue : function is "VHPIDIRECT getLogicIntValue";
+
+    function getUlogicValue(logic : std_ulogic) return integer is
+    begin assert false report "VHPIDIRECT getUlogicValue" severity failure; end;
+    attribute foreign of getUlogicValue : function is "VHPIDIRECT getLogicIntValue";
+
+    function getBitValue(bitVal : bit) return integer is
+    begin assert false report "VHPIDIRECT getBitValue" severity failure; end;
+    attribute foreign of getBitValue : function is "VHPIDIRECT getLogicIntValue";
+    
   begin
 
     testCinterface(
@@ -112,6 +124,29 @@ begin
     report "getLine: " & getLine.all severity note;
     assert getLine.all = "HELLO WORLD" severity failure;
 
+    assert 0 = getLogicValue('U') severity error;
+    assert 1 = getLogicValue('X') severity error;
+    assert 2 = getLogicValue('0') severity error;
+    assert 3 = getLogicValue('1') severity error;
+    assert 4 = getLogicValue('Z') severity error;
+    assert 5 = getLogicValue('W') severity error;
+    assert 6 = getLogicValue('L') severity error;
+    assert 7 = getLogicValue('H') severity error;
+    assert 8 = getLogicValue('-') severity error;
+
+    assert 0 = getUlogicValue('U') severity error;
+    assert 1 = getUlogicValue('X') severity error;
+    assert 2 = getUlogicValue('0') severity error;
+    assert 3 = getUlogicValue('1') severity error;
+    assert 4 = getUlogicValue('Z') severity error;
+    assert 5 = getUlogicValue('W') severity error;
+    assert 6 = getUlogicValue('L') severity error;
+    assert 7 = getUlogicValue('H') severity error;
+    assert 8 = getUlogicValue('-') severity error;
+
+    assert 0 = getBitValue('0') severity error;
+    assert 1 = getBitValue('1') severity error;
+    
     wait;
   end process;
 end;
