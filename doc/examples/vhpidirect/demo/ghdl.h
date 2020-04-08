@@ -14,24 +14,10 @@ typedef struct {
   int32_t len;
 } range_t;
 
-// Range/bounds of an unconstrained array with 1, 2 or 3 dimensions of type 'natural'
-typedef struct {
-  range_t dim_1;
-} bounds_t;
-typedef struct {
-  range_t dim_1;
-  range_t dim_2;
-} bounds2D_t;
-typedef struct {
-  range_t dim_1;
-  range_t dim_2;
-  range_t dim_3;
-} bounds3D_t;
-
 // Unconstrained array with dimensions of type 'natural'
 typedef struct {
   void* array;
-  bounds_t* bounds;
+  range_t* bounds;
 } ghdl_NaturalDimArr_t;
 
 // Access to an unconstrained array with 1 dimension of type 'natural'
@@ -44,13 +30,16 @@ typedef struct {
 *  Print custom types
 */
 
-void print(ghdl_NaturalDimArr_t* ptr) {
-    printf("array: %p\n", ptr->array);
-    printf("bounds: %p\n", ptr->bounds);
-    printf("bounds.left: %d\n", ptr->bounds->dim_1.left);
-    printf("bounds.right: %d\n", ptr->bounds->dim_1.right);
-    printf("bounds.dir: %d\n", ptr->bounds->dim_1.dir);
-    printf("bounds.len: %d\n", ptr->bounds->dim_1.len);
+void printUnconstrained(ghdl_NaturalDimArr_t* ptr, int dims) {
+  printf("array: %p\n", ptr->array);
+  printf("bounds: %p\n", ptr->bounds);
+  int i;
+  for(i = 0; i < dims; i++){
+    printf("bounds%d.left: %d\n", i, ptr->bounds[i].left);
+    printf("bounds%d.right: %d\n", i, ptr->bounds[i].right);
+    printf("bounds%d.dir: %d\n", i, ptr->bounds[i].dir);
+    printf("bounds%d.len: %d\n", i, ptr->bounds[i].len);
+  }
 }
 
 /*
@@ -61,7 +50,7 @@ void print(ghdl_NaturalDimArr_t* ptr) {
 char* ghdlToString(ghdl_NaturalDimArr_t* ptr) {
   assert(ptr != NULL);
   assert(ptr->bounds != NULL);
-  int len = ptr->bounds->dim_1.len;
+  int len = ptr->bounds[0].len;
   char* str = malloc(sizeof(char) * len + 1);
   strncpy(str, ptr->array, len);
   str[len] = '\0';
@@ -90,20 +79,9 @@ void ghdlToArray(ghdl_NaturalDimArr_t* ptr, void** vec, int* len, int num) {
   assert(ptr->bounds != NULL);
   *vec = ptr->array;
 
-  void* b = ptr->bounds;
-  switch (num) {
-    case 1:
-      len[0] = ((bounds_t*)b)->dim_1.len;
-      break;
-    case 2:
-      len[0] = ((bounds2D_t*)b)->dim_2.len;
-      len[1] = ((bounds2D_t*)b)->dim_1.len;
-      break;
-    case 3:
-      len[0] = ((bounds3D_t*)b)->dim_3.len;
-      len[1] = ((bounds3D_t*)b)->dim_2.len;
-      len[2] = ((bounds3D_t*)b)->dim_1.len;
-      break;
+  for (int i = 0; i < num; i++)
+  {
+    len[i] = ptr->bounds[num-i-1].len;
   }
 }
 
@@ -140,7 +118,7 @@ ghdl_NaturalDimArr_t ghdlFromString(char *string) {
   range->dir = 0;
   range->len = len;
   // Don't bother copying the string, because GHDL will do that anyway
-  return (ghdl_NaturalDimArr_t){.array=string, .bounds=(bounds_t*)range};
+  return (ghdl_NaturalDimArr_t){.array=string, .bounds=range};
 }
 
 // @RocketRoss
@@ -163,46 +141,26 @@ void ghdlSetRange(range_t* r, int len, bool reversed){
   }
 }
 
-// @bradleyharden???
+// @RocketRoss
 /*
 *  Convert C types representing an unconstrained array with a dimension of type 'natural', to a fat pointer
 */
 
 ghdl_NaturalDimArr_t ghdlFromArray(void* vec, int* len, int dims) {
-  void* b;
-  void* a;
+  range_t* b = malloc(sizeof(range_t)*dims);
   assert(b != NULL);
-  switch (dims) {
-    case 3:
-      b = malloc(sizeof(bounds3D_t));
 
-      a = malloc(sizeof(int)*len[0]*len[1]*len[2]);
-      memmove(a, vec, sizeof(int)*len[0]*len[1]*len[2]);
-      vec = a;
-
-      ghdlSetRange(&(((bounds3D_t*)b)->dim_1), len[0], false);
-      ghdlSetRange(&(((bounds3D_t*)b)->dim_2), len[1], false);
-      ghdlSetRange(&(((bounds3D_t*)b)->dim_3), len[2], false);
-      break;
-    case 2:
-      b = malloc(sizeof(bounds2D_t));
-
-      a = malloc(sizeof(int)*len[0]*len[1]);
-      memmove(a, vec, sizeof(int)*len[0]*len[1]);
-      vec = a;
-
-      ghdlSetRange(&(((bounds2D_t*)b)->dim_1), len[0], false);
-      ghdlSetRange(&(((bounds2D_t*)b)->dim_2), len[1], false);
-      break;
-    case 1:
-      b = malloc(sizeof(bounds_t));
-      a = malloc(sizeof(int)*len[0]);
-      memmove(a, vec, sizeof(int)*len[0]);
-      vec = a;
-      
-      ghdlSetRange(&(((bounds_t*)b)->dim_1), len[0], false);
+  int totalSize = 1;
+  for (int i = 0; i < dims; i++)
+  {
+    totalSize *= len[i];
+    ghdlSetRange(b+i, len[i], false);
   }
-  return (ghdl_NaturalDimArr_t){.array= a, .bounds=(bounds_t*)b};
+  
+  void* a = malloc(sizeof(int)*totalSize);
+  memmove(a, vec, sizeof(int)*totalSize);
+  vec = a;
+  return (ghdl_NaturalDimArr_t){.array= a, .bounds=b};
 }
 
 /*
