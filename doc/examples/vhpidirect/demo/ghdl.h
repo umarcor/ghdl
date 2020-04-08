@@ -40,6 +40,12 @@ typedef struct {
   bounds2D_t* bounds;
 } ghdl_Natural2DimArr_t;
 
+// Unconstrained array with 3 dimensions of type 'natural'
+typedef struct {
+  void* array;
+  bounds3D_t* bounds;
+} ghdl_Natural3DimArr_t;
+
 // Access to an unconstrained array with 1 dimension of type 'natural'
 typedef struct {
   range_t range;
@@ -72,6 +78,22 @@ void print2d(ghdl_Natural2DimArr_t* ptr) {
     printf("bounds2.len: %d\n", ptr->bounds->dim_2.len);
 }
 
+void print3d(ghdl_Natural3DimArr_t* ptr) {
+    printf("array: %p\n", ptr->array);
+    printf("bounds: %p\n", ptr->bounds);
+    printf("bounds1.left: %d\n", ptr->bounds->dim_1.left);
+    printf("bounds1.right: %d\n", ptr->bounds->dim_1.right);
+    printf("bounds1.dir: %d\n", ptr->bounds->dim_1.dir);
+    printf("bounds1.len: %d\n", ptr->bounds->dim_1.len);
+    printf("bounds2.left: %d\n", ptr->bounds->dim_2.left);
+    printf("bounds2.right: %d\n", ptr->bounds->dim_2.right);
+    printf("bounds2.dir: %d\n", ptr->bounds->dim_2.dir);
+    printf("bounds2.len: %d\n", ptr->bounds->dim_2.len);
+    printf("bounds3.left: %d\n", ptr->bounds->dim_3.left);
+    printf("bounds3.right: %d\n", ptr->bounds->dim_3.right);
+    printf("bounds3.dir: %d\n", ptr->bounds->dim_3.dir);
+    printf("bounds3.len: %d\n", ptr->bounds->dim_3.len);
+}
 /*
 *  Convert a fat pointer of an unconstrained string, to a (null terminated) C string
 */
@@ -222,6 +244,22 @@ ghdl_Natural2DimArr_t ghdlFromArray2d(void* vec, int* len, int dims){
   ghdlSetRange(&(b->dim_2), len[1], false);
   
   return (ghdl_Natural2DimArr_t){.array= a, .bounds=b};
+}
+
+ghdl_Natural3DimArr_t ghdlFromArray3d(void* vec, int* len, int dims){
+  bounds3D_t* b = malloc(sizeof(bounds3D_t));
+  void* a;
+  assert(b != NULL);
+
+  a = malloc(sizeof(int)*len[0]*len[1]*len[2]);
+  memmove(a, vec, sizeof(int)*len[0]*len[1]*len[2]);
+  vec = a;
+
+  ghdlSetRange(&(b->dim_1), len[0], false);
+  ghdlSetRange(&(b->dim_2), len[1], false);
+  ghdlSetRange(&(b->dim_3), len[2], false);
+  
+  return (ghdl_Natural3DimArr_t){.array= a, .bounds=b};
 }
 
 /*

@@ -36,7 +36,8 @@ void testCinterface(
   ghdl_NaturalDimArr_t* v_vec_rec,
   ghdl_NaturalDimArr_t* v_vec_enum,
   ghdl_NaturalDimArr_t* v_2vec_real,
-  ghdl_Natural2DimArr_t* v_mat_int
+  ghdl_Natural2DimArr_t* v_mat_int,
+  ghdl_Natural3DimArr_t* v_3d_int
 ) {
   assert(v_logic == HDL_H);
   printf("v_logic  : %c\n", HDL_LOGIC_STATE[v_logic]);
@@ -164,6 +165,27 @@ void testCinterface(
     }
   }
   printf("v_mat_int  : %p [%d,%d]\n\n", mat_int, len2[0], len2[1]);
+
+  printf("\nVerify the 3D GHDL array in C\n");
+  //print3d(v_3d_int);
+  int* len3 = malloc(3 * sizeof(int));
+
+  int32_t* d3_int;
+  ghdlToArray(v_3d_int, (void**)&d3_int, len3, 3);
+  for(int i = 0; i < len3[0]; i++)
+  {
+    for (int j = 0; j < len3[1]; j++)
+    {
+      for (int k = 0; k < len3[2]; k++)
+      { 
+        printf("C assert: %d == (val: %d) @ [%d,%d,%d](%d)\n", 11*(i*len3[1]*len3[2]+j*len3[2]+k+1), d3_int[i*len3[1]*len3[2]+j*len3[2]+k], i, j, k, i*len3[1]*len3[2]+j*len3[2]+k);
+        assert(d3_int[i*len3[1]*len3[2]+j*len3[2]+k] == 11*(i*len3[1]*len3[2]+j*len3[2]+k+1));
+      }
+    }
+  }
+  printf("v_3d_int  : %p [%d,%d,%d]\n\n", d3_int, len3[0], len3[1], len3[2]);
+
+  printf("end testCinterface\n\n");
 }
 
 void getString(ghdl_NaturalDimArr_t* ptr) {
@@ -209,7 +231,32 @@ void getIntMat(ghdl_Natural2DimArr_t* ptr){
     }
     printf("\n");
   }
-  printf("\n");
+}
+
+void getInt3d(ghdl_Natural3DimArr_t* ptr){
+  int32_t d3[2][4][3];
+  int32_t len[3] = {2, 4, 3};
+  int x, y, z;
+  for ( x=0 ; x<len[0] ; x++ ) {
+    for ( y=0 ; y<len[1] ; y++ ) {
+      for ( z=0 ; z<len[2] ; z++ ) {
+        int ind[] = {x, y, z};
+        int flatIndex = getFlatArrayIndex(ind, len, 3);
+        d3[x][y][z] = 11*(flatIndex+1);
+      }
+    }
+  }
+  *ptr = ghdlFromArray3d(d3, len, 3);
+  printf("\n3D Array values [%d,%d,%d]:\n", len[0], len[1], len[2]);
+  for ( x=0 ; x<len[0] ; x++ ) {
+    for ( y=0 ; y<len[1] ; y++ ) {
+      for ( z=0 ; z<len[2] ; z++ ) {
+        printf("d3[%d][%d][%d] = %d\t", x, y, z, d3[x][y][z]);
+      }
+      printf("\n");
+    }
+    printf("\n");
+  }
 }
 
 ghdl_AccNaturalDimArr_t* getLine() {

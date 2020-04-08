@@ -23,8 +23,9 @@ architecture arch of tb is
   type enum_vec_t is array(natural range <>) of enum_t;
 
   type real_2vec_t is array (natural range <>, natural range <>) of real;
-  
+
   type int_2vec_t is array(natural range <>, natural range <>) of integer;
+  type int_3vec_t is array(natural range <>, natural range <>, natural range <>) of integer;
 begin
   process
 
@@ -50,7 +51,8 @@ begin
       v_vec_rec   : rec_vec_t   := (('x', 17),('y', 25));
       v_vec_enum  : enum_vec_t  := (start, busy, standby);
       v_2vec_real : real_2vec_t := ((0.1, 0.25, 0.5),(3.33, 4.25, 5.0));
-      v_mat_int   : int_2vec_t  := ((11, 22, 33), (44, 55, 66))
+      v_mat_int   : int_2vec_t  := ((11, 22, 33), (44, 55, 66));
+      v_3d_int   : int_3vec_t   := ( ((11, 22, 33), (44, 55, 66)), ((77, 88, 99), (110, 121, 132)) )
     ) is
     begin assert false report "VHPIDIRECT testCinterface" severity failure; end;
     attribute foreign of testCinterface : procedure is "VHPIDIRECT testCinterface";
@@ -67,6 +69,10 @@ begin
     begin assert false report "VHPIDIRECT getIntMat" severity failure; end;
     attribute foreign of getIntMat : function is "VHPIDIRECT getIntMat";
 
+    function getInt3d return int_3vec_t is
+    begin assert false report "VHPIDIRECT getInt3d" severity failure; end;
+    attribute foreign of getInt3d : function is "VHPIDIRECT getInt3d";
+
     function getLine return line is
     begin assert false report "VHPIDIRECT getLine" severity failure; end;
     attribute foreign of getLine : function is "VHPIDIRECT getLine";
@@ -74,6 +80,7 @@ begin
     constant g_str: string := getString;
     constant g_int_vec: int_vec_t := getIntVec;
     constant g_int_mat: int_2vec_t := getIntMat;
+    constant g_int_3d: int_3vec_t := getInt3d;
 
     variable g_line: line := getLine;
 
@@ -114,7 +121,8 @@ begin
       v_vec_rec   => (('x', 17),('y', 25)),
       v_vec_enum  => (start, busy, standby),
       v_2vec_real => ((0.1, 0.25, 0.5),(3.33, 4.25, 5.0)),
-      v_mat_int   =>  ((11, 22, 33), (44, 55, 66))
+      v_mat_int   =>  ((11, 22, 33), (44, 55, 66)),
+      v_3d_int    => ( ((11, 22, 33), (44, 55, 66)), ((77, 88, 99), (110, 121, 132)) )
     );
 
     report "g_str'length: " & integer'image(g_str'length) severity note;
@@ -163,6 +171,18 @@ begin
         spareInt := spareInt + 1;
         assert g_int_mat(i, j) = 11*spareInt severity error;
         report "Asserted Mat [" & integer'image(i) & "," & integer'image(j) & "]: " & integer'image(g_int_mat(i, j)) severity note;
+      end loop ;
+    end loop ;
+
+    spareInt := 0;
+    report "g_int_3d'length: " & integer'image(g_int_3d'length) severity note;
+    for i in g_int_3d'range(1) loop
+      for j in g_int_3d'range(2) loop
+        for k in g_int_3d'range(3) loop
+          spareInt := spareInt + 1;
+          assert g_int_3d(i, j, k) = 11*spareInt severity error;
+          report "Asserted 3D [" & integer'image(i) & "," & integer'image(j) & "," & integer'image(k) & "]: " & integer'image(g_int_3d(i, j, k)) severity note;
+          end loop;
       end loop ;
     end loop ;
 
