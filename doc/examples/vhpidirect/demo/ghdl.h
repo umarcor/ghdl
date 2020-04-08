@@ -143,25 +143,50 @@ ghdl_NaturalDimArr_t ghdlFromString(char *string) {
   return (ghdl_NaturalDimArr_t){.array=string, .bounds=(bounds_t*)range};
 }
 
+// @RocketRoss
+/*
+*   Helper to setup the bouds_t for ghdlFromArray
+*/
+
+void ghdlSetRange(range_t* r, int len, bool reversed){
+  if(!reversed){//to
+    r->left = 0;
+    r->right = len-1;
+    r->dir = 0;
+    r->len = len;
+  }
+  else{//downto
+    r->left = len-1;
+    r->right = 0;
+    r->dir = 1;
+    r->len = len;
+  }
+}
+
+// @bradleyharden???
 /*
 *  Convert C types representing an unconstrained array with a dimension of type 'natural', to a fat pointer
 */
 
-ghdl_NaturalDimArr_t ghdlFromArray(void* vec, int* len, int num) {
+ghdl_NaturalDimArr_t ghdlFromArray(void* vec, int* len, int dims) {
   bounds_t* b = malloc(sizeof(bounds_t));
+  void* a;
   assert(b != NULL);
-  switch (num) {
+  switch (dims) {
     case 3:
       // TODO
+      break;
     case 2:
       // TODO
+      break;
     case 1:
-      b->dim_1.left = 0;
-      b->dim_1.right = len[0]-1;
-      b->dim_1.dir = 0;
-      b->dim_1.len = len[0];
+      a = malloc(sizeof(int)*len[0]);
+      memmove(a, vec, sizeof(int)*len[0]);
+      vec = a;
+      
+      ghdlSetRange(&(b->dim_1), len[0], false);
   }
-  return (ghdl_NaturalDimArr_t){.array=vec, .bounds=b};
+  return (ghdl_NaturalDimArr_t){.array= a, .bounds=b};
 }
 
 /*
