@@ -133,7 +133,7 @@ begin
     if g_str'length /= 0 then
       report "g_str: " & g_str severity note;
     end if;
-    --report "string: " & getString severity note;--g_str results from calling getString(), calling it again means a malloc'd pointer is lost.
+    report "string: " & getString severity note;--g_str results from calling getString(), calling it again means a malloc'd pointer can be lost.
 
     report "g_int_vec'length: " & integer'image(g_int_vec'length) severity note;
     for x in g_int_vec'range loop
@@ -142,7 +142,7 @@ begin
     end loop;
 
     report "g_line: " & g_line.all severity note;
-    --report "getLine: " & getLine.all severity note;--g_line results from calling getLine(), calling it again means a malloc'd pointer is lost.
+    report "getLine: " & getLine.all severity note;--g_line results from calling getLine(), calling it again means a malloc'd pointer can be lost.
     assert getLine.all = "HELLO WORLD" severity failure;
 
     assert 0 = getLogicValue('U') severity error;

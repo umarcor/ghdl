@@ -229,6 +229,9 @@ void freePointers(){
 }
 
 void getString(ghdl_NaturalDimArr_t* ptr) {
+  if(string_bounds != NULL){//this handles a second call//this handles a second call
+    free(string_bounds);
+  }
   *ptr = ghdlFromString("HELLO WORLD");
   string_bounds = ptr->bounds;
 }
@@ -322,6 +325,9 @@ void getInt3d(ghdl_NaturalDimArr_t* ptr){
 }
 
 ghdl_AccNaturalDimArr_t* getLine() {
+  if(line != NULL){//this handles a second call
+    free(line);
+  }
   line = ghdlAccFromString("HELLO WORLD");
   return line;
 }
