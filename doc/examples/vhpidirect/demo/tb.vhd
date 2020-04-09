@@ -95,6 +95,10 @@ begin
     function getBitValue(bitVal : bit) return integer is
     begin assert false report "VHPIDIRECT getBitValue" severity failure; end;
     attribute foreign of getBitValue : function is "VHPIDIRECT getLogicIntValue";
+
+    procedure freeCPointers is
+    begin assert false report "VHPIDIRECT freeCPointers" severity failure; end;
+    attribute foreign of freeCPointers : procedure is "VHPIDIRECT freePointers";
     
     variable spareInt: integer;
   begin
@@ -129,7 +133,7 @@ begin
     if g_str'length /= 0 then
       report "g_str: " & g_str severity note;
     end if;
-    report "string: " & getString severity note;
+    --report "string: " & getString severity note;--g_str results from calling getString(), calling it again means a malloc'd pointer is lost.
 
     report "g_int_vec'length: " & integer'image(g_int_vec'length) severity note;
     for x in g_int_vec'range loop
@@ -138,7 +142,7 @@ begin
     end loop;
 
     report "g_line: " & g_line.all severity note;
-    report "getLine: " & getLine.all severity note;
+    --report "getLine: " & getLine.all severity note;--g_line results from calling getLine(), calling it again means a malloc'd pointer is lost.
     assert getLine.all = "HELLO WORLD" severity failure;
 
     assert 0 = getLogicValue('U') severity error;
@@ -169,8 +173,8 @@ begin
     for i in g_int_mat'range(1) loop
       for j in g_int_mat'range(2) loop
         spareInt := spareInt + 1;
+        report "Asserting Mat [" & integer'image(i) & "," & integer'image(j) & "]: " & integer'image(g_int_mat(i, j)) severity note;
         assert g_int_mat(i, j) = 11*spareInt severity error;
-        report "Asserted Mat [" & integer'image(i) & "," & integer'image(j) & "]: " & integer'image(g_int_mat(i, j)) severity note;
       end loop ;
     end loop ;
 
@@ -180,12 +184,14 @@ begin
       for j in g_int_3d'range(2) loop
         for k in g_int_3d'range(3) loop
           spareInt := spareInt + 1;
+          report "Asserting 3D [" & integer'image(i) & "," & integer'image(j) & "," & integer'image(k) & "]: " & integer'image(g_int_3d(i, j, k)) severity note;
           assert g_int_3d(i, j, k) = 11*spareInt severity error;
-          report "Asserted 3D [" & integer'image(i) & "," & integer'image(j) & "," & integer'image(k) & "]: " & integer'image(g_int_3d(i, j, k)) severity note;
           end loop;
       end loop ;
     end loop ;
 
+    freeCPointers;
+    report "No errors/failures. Concluding testbench." severity note;
     wait;
   end process;
 end;

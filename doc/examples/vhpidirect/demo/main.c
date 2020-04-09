@@ -14,6 +14,18 @@ typedef struct rec_t {
 
 typedef enum {standby, start, busy, done} enum_t;
 
+int32_t* vec;
+bounds_t* vec_bounds;
+int32_t* mat;
+bounds_t* mat_bounds;
+int32_t* d3_ptr;
+bounds_t* d3_bounds;
+int* len;
+int* len2;
+int* len3;
+bounds_t* string_bounds;
+ghdl_AccNaturalDimArr_t* line;
+
 int getFlatArrayIndex(int* dimIndex, int* lens, int dims){
   if(dims == 1){
     return dimIndex[0];
@@ -88,8 +100,9 @@ void testCinterface(
 
   char* str = ghdlToString(v_str);
   printf("v_str  : %p '%s' [%ld]\n", v_str->array, str, strlen(str));
+  free(str);
 
-  int* len = malloc(2 * sizeof(int));
+  len = malloc(2 * sizeof(int));
 
   int32_t* vec_int;
   ghdlToArray(v_vec_int, (void**)&vec_int, len, 1);
@@ -161,7 +174,7 @@ void testCinterface(
 
   printf("\nVerify GHDL Matrix in C\n");
   printAttributes(v_mat_int, 2);
-  int* len2 = malloc(2 * sizeof(int));
+  len2 = malloc(2 * sizeof(int));
 
   int32_t* mat_int;
   ghdlToArray(v_mat_int, (void**)&mat_int, len2, 2);
@@ -179,7 +192,7 @@ void testCinterface(
 
   printf("\nVerify the 3D GHDL array in C\n");
   printAttributes(v_3d_int, 3);
-  int* len3 = malloc(3 * sizeof(int));
+  len3 = malloc(3 * sizeof(int));
 
   int32_t* d3_int;
   ghdlToArray(v_3d_int, (void**)&d3_int, len3, 3);
@@ -201,61 +214,106 @@ void testCinterface(
   printf("end testCinterface\n\n");
 }
 
-void getString(ghdl_NaturalDimArr_t* ptr) {
-  *ptr = ghdlFromString("HELLO WORLD");
+void freePointers(){
+  free(vec);
+  free(vec_bounds);
+  free(mat);
+  free(mat_bounds);
+  free(d3_ptr);
+  free(d3_bounds);
+  free(string_bounds);
+  free(line);
+  free(len);
+  free(len2);
+  free(len3);
 }
 
-void getIntVec(ghdl_NaturalDimArr_t* ptr) {
-  int32_t vec[6] = {11, 22, 33, 44, 55};
-  int32_t len[1] = {5};
-  int x;
-  *ptr = ghdlFromArray(vec, len, 1);
+void getString(ghdl_NaturalDimArr_t* ptr) {
+  *ptr = ghdlFromString("HELLO WORLD");
+  string_bounds = ptr->bounds;
+}
+
+void getIntVec(ghdl_NaturalDimArr_t *ptr) {//Notice how similar this is to getIntMat() which is supposedly a 2D array (it is also actually just a flat (1D) array)
+  vec = malloc(2*3*sizeof(int32_t));
+  int32_t len[1] = {2*3};
+  int x, y;
+  for ( x=0 ; x<2 ; x++ ) {
+    for ( y=0 ; y<3 ; y++ ) {
+      int flatIndex = x*3+y;
+      vec[flatIndex] = 11*(flatIndex+1);
+    }
+  }
+  
+  *ptr = ghdlFromPointer((void *)vec, len, 1); 
+  vec_bounds = ptr->bounds; 
+  assert(ptr->array == vec);
+
   printf("\n1D Array values [%d]:\n", len[0]);
   for ( x=0 ; x<len[0] ; x++ ) {
-    printf("[%d]: %d\n", x, vec[x]);
+    printf("[%d]: %d VS %d\n", x, vec[x], ((int32_t*)ptr->array)[x]);
+    assert(vec[x] == ((int32_t*)ptr->array)[x]);
   }
+  
 }
 
 void getIntMat(ghdl_NaturalDimArr_t* ptr){
-  int32_t mat[2][3];
+  mat = malloc(2*3*sizeof(int32_t));
   int32_t len[2] = {2, 3};
-  int x, y;
+  int x, y, ind[2];
   for ( x=0 ; x<len[0] ; x++ ) {
+    ind[0] = x;
     for ( y=0 ; y<len[1] ; y++ ) {
-      int ind[] = {x, y};
+      ind[1] = y;
       int flatIndex = getFlatArrayIndex(ind, len, 2);
-      mat[x][y] = 11*(flatIndex+1);
+      mat[flatIndex] = 11*(flatIndex+1);
     }
   }
-  *ptr = ghdlFromArray(mat, len, 2);
+  
+  *ptr = ghdlFromPointer((void *)mat, len, 2);
+  mat_bounds = ptr->bounds;
   printf("\n2D Array values [%d,%d]:\n", len[0], len[1]);
   for ( x=0 ; x<len[0] ; x++ ) {
+    ind[0] = x;
     for ( y=0 ; y<len[1] ; y++ ) {
-      printf("mat[%d][%d] = %d\t", x, y, mat[x][y]);
+      ind[1] = y;
+      int flatIndex = getFlatArrayIndex(ind, len, 2);
+      printf("mat[%d][%d] = %d\t", x, y, mat[flatIndex]);
+      assert(mat[flatIndex] == ((uint32_t*)ptr->array)[flatIndex]);
     }
     printf("\n");
   }
+  
 }
 
 void getInt3d(ghdl_NaturalDimArr_t* ptr){
   int32_t d3[2][4][3];
   int32_t len[3] = {2, 4, 3};
-  int x, y, z;
+  int x, y, z, ind[3];
   for ( x=0 ; x<len[0] ; x++ ) {
+    ind[0] = x;
     for ( y=0 ; y<len[1] ; y++ ) {
+      ind[1] = y;
       for ( z=0 ; z<len[2] ; z++ ) {
-        int ind[] = {x, y, z};
+        ind[2] = z;
         int flatIndex = getFlatArrayIndex(ind, len, 3);
         d3[x][y][z] = 11*(flatIndex+1);
       }
     }
   }
-  *ptr = ghdlFromArray(d3, len, 3);
+  
+  *ptr = ghdlFromArray((void *)d3, len, 3, sizeof(int32_t));
+  d3_ptr = ptr->array;
+  d3_bounds = ptr->bounds;
   printf("\n3D Array values [%d,%d,%d]:\n", len[0], len[1], len[2]);
   for ( x=0 ; x<len[0] ; x++ ) {
+    ind[0] = x;
     for ( y=0 ; y<len[1] ; y++ ) {
+      ind[1] = y;
       for ( z=0 ; z<len[2] ; z++ ) {
+        ind[2] = z;
+        int flatIndex = getFlatArrayIndex(ind, len, 3);
         printf("d3[%d][%d][%d] = %d\t", x, y, z, d3[x][y][z]);
+        assert(d3[x][y][z] == ((uint32_t*)ptr->array)[flatIndex]);
       }
       printf("\n");
     }
@@ -264,7 +322,8 @@ void getInt3d(ghdl_NaturalDimArr_t* ptr){
 }
 
 ghdl_AccNaturalDimArr_t* getLine() {
-  return ghdlAccFromString("HELLO WORLD");
+  line = ghdlAccFromString("HELLO WORLD");
+  return line;
 }
 
 int getLogicIntValue(char logic){

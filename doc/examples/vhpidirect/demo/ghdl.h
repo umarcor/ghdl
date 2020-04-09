@@ -12,17 +12,17 @@ typedef struct {
   int32_t right;
   int32_t dir;
   int32_t len;
-} range_t;
+} bounds_t;
 
 // Unconstrained array with dimensions of type 'natural'
 typedef struct {
   void* array;
-  range_t* bounds;
+  bounds_t* bounds;
 } ghdl_NaturalDimArr_t;
 
 // Access to an unconstrained array with 1 dimension of type 'natural'
 typedef struct {
-  range_t range;
+  bounds_t range;
   uint8_t array[];
 } ghdl_AccNaturalDimArr_t;
 
@@ -110,7 +110,7 @@ ghdl_NaturalDimArr_t* ghdlFromString(char* str) {
 
 // @bradleyharden
 ghdl_NaturalDimArr_t ghdlFromString(char *string) {
-  range_t *range = malloc(sizeof(range_t));
+  bounds_t *range = malloc(sizeof(bounds_t));
   assert(range != NULL);
   uint32_t len = strlen(string);
   range->left = 1;
@@ -126,7 +126,7 @@ ghdl_NaturalDimArr_t ghdlFromString(char *string) {
 *   Helper to setup the bounds_t for ghdlFromArray
 */
 
-void ghdlSetRange(range_t* r, int len, bool reversed){
+void ghdlSetRange(bounds_t* r, int len, bool reversed){
   if(!reversed){//to
     r->left = 0;
     r->right = len-1;
@@ -146,20 +146,31 @@ void ghdlSetRange(range_t* r, int len, bool reversed){
 *  Convert C types representing an unconstrained array with a dimension of type 'natural', to a fat pointer
 */
 
-ghdl_NaturalDimArr_t ghdlFromArray(void* vec, int* len, int dims) {
-  range_t* b = malloc(sizeof(range_t)*dims);
+ghdl_NaturalDimArr_t ghdlFromPointer(void* vec, int* len, int dims) {//handled malloc'd pointer in freeCPointers()
+  bounds_t* b = malloc(sizeof(bounds_t)*dims);
   assert(b != NULL);
 
+  for (int i = 0; i < dims; i++)
+  {
+    ghdlSetRange(b+i, len[i], false);
+  }
+  
+  void *a = vec;
+  return (ghdl_NaturalDimArr_t){.array= a, .bounds=b};
+}
+
+ghdl_NaturalDimArr_t ghdlFromArray(void* vec, int* len, int dims, int sizeOfDataType) {//handled malloc'd pointer in freeCPointers()
+  bounds_t* b = malloc(sizeof(bounds_t)*dims);
   int totalSize = 1;
   for (int i = 0; i < dims; i++)
   {
     totalSize *= len[i];
     ghdlSetRange(b+i, len[i], false);
   }
-  
-  void* a = malloc(sizeof(int)*totalSize);
-  memmove(a, vec, sizeof(int)*totalSize);
-  vec = a;
+
+  void *a = malloc(sizeOfDataType * totalSize);
+  memcpy(a, vec, sizeOfDataType * totalSize);
+
   return (ghdl_NaturalDimArr_t){.array= a, .bounds=b};
 }
 
@@ -167,7 +178,7 @@ ghdl_NaturalDimArr_t ghdlFromArray(void* vec, int* len, int dims) {
 *  Convert an access to an unconstrained string, to a (null terminated) C string
 */
 
-char* ghdlAccToString(ghdl_AccNaturalDimArr_t *line) {
+char* ghdlAccToString(ghdl_AccNaturalDimArr_t *line) {//TODO Test //TODO handle malloc'd pointer
   // Add a null character, because GHDL strings are not null-terminated
   char *string = malloc(line->range.len + 1);
   strncpy(string, line->array, line->range.len);
@@ -179,7 +190,7 @@ char* ghdlAccToString(ghdl_AccNaturalDimArr_t *line) {
 */
 
 // TODO: support 2 and 3 dimensions
-ghdl_AccNaturalDimArr_t* ghdlAccFromArray(uint32_t length, size_t bytes) {
+ghdl_AccNaturalDimArr_t* ghdlAccFromArray(uint32_t length, size_t bytes) {//TODO handle malloc'd pointer
   ghdl_AccNaturalDimArr_t *access = malloc(sizeof(ghdl_AccNaturalDimArr_t) + length * bytes);
   assert(access != NULL);
   access->range.left = 0;
