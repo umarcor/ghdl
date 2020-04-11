@@ -25,6 +25,7 @@ with Types; use Types;
 with Netlists; use Netlists;
 
 with Synth.Source;
+with Synth.Objtypes; use Synth.Objtypes;
 with Synth.Values; use Synth.Values;
 with Synth.Context; use Synth.Context;
 with Vhdl.Nodes; use Vhdl.Nodes;
@@ -39,6 +40,9 @@ package Synth.Expr is
 
    --  For a static value V, return the value.
    function Get_Static_Discrete (V : Valtyp) return Int64;
+
+   --  Return the memory (as a memtyp) of static value V.
+   function Get_Value_Memtyp (V : Valtyp) return Memtyp;
 
    --  Return True only if discrete value V is known to be positive or 0.
    --  False means either not positive or unknown.
@@ -126,8 +130,12 @@ package Synth.Expr is
    procedure Free_Logvec_Array is new Ada.Unchecked_Deallocation
      (Logvec_Array, Logvec_Array_Acc);
 
-   procedure Value2logvec (Val : Valtyp;
+   --  Convert W bits from OFF of VAL to a Logvec_Array.
+   --  OFF and W are offset and width in bit representation.
+   procedure Value2logvec (Val : Memtyp;
+                           Off : Uns32;
+                           W : Width;
                            Vec : in out Logvec_Array;
-                           Off : in out Uns32;
+                           Vec_Off : in out Uns32;
                            Has_Zx : in out Boolean);
 end Synth.Expr;

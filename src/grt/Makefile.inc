@@ -46,17 +46,35 @@ endif
 
 GRT_ELF_OPTS:=-Wl,--version-script=@/grt.ver -Wl,--export-dynamic
 
+# These conditions define 3 variables:
+#  GRT_TARGET_OBJS: platform specific files to be added in the grt library
+#  GRT_EXTRA_LIBS: platform specific libraries and options to be added during
+#     link of simulation binaries.  These are library used by grt.
+#  GRT_EXEC_OPTS: platform specific options to be added during link of
+#     simulation binaries, but not needed when creating a shared library.
+#     It is set on ELF platforms to export some symbols (like the vpi
+#     functions) so that a vpi object file can refer them.
 # Set target files.
 ifeq ($(filter-out mingw32 mingw64,$(osys)),)
+  # For windows.
   GRT_TARGET_OBJS=win32.o clock.o
   GRT_EXTRA_LIB=-ldbghelp
+  GRT_EXEC_OPTS=
 else
+  # For unix variants.
+  # Usually needs -dl (for dlopen) and -lm (for math functions).
+  # But some platforms provide these features within libc.
   GRT_TARGET_OBJS=jumps.o times.o
+  GRT_EXTRA_LIB=
+  GRT_EXEC_OPTS=
+
   ifeq ($(filter-out linux%,$(osys)),)
-    GRT_EXTRA_LIB=-ldl -lm $(GRT_ELF_OPTS)
+    GRT_EXTRA_LIB=-ldl -lm
+    GRT_EXEC_OPTS=$(GRT_ELF_OPTS)
   endif
   ifeq ($(filter-out netbsd freebsd% dragonfly%,$(osys)),)
-    GRT_EXTRA_LIB=-lm $(GRT_ELF_OPTS)
+    GRT_EXTRA_LIB=-lm
+    GRT_EXEC_OPTS=$(GRT_ELF_OPTS)
   endif
   ifeq ($(filter-out solaris%,$(osys)),)
     GRT_EXTRA_LIB=-ldl -lm
@@ -102,7 +120,7 @@ GRT_PRAGMA_FLAG=-gnatec$(GRTSRCDIR)/grt.adc -gnatdY
 # Rule to compile an Ada file.
 GRT_ADACOMPILE=$(GNATMAKE) -u -c $(GRT_FLAGS) $(GRT_PRAGMA_FLAG)
 
-grt-all: $(libdirsuffix)/libgrt.a $(libdirsuffix)/$(GRT_LIBBACKTRACE) $(libdirsuffix)/grt.lst $(libdirsuffix)/grt.ver
+grt-all: $(libdirsuffix)/libgrt.a $(libdirsuffix)/$(GRT_LIBBACKTRACE) $(libdirsuffix)/grt.lst $(libdirsuffix)/grt-exec.lst $(libdirsuffix)/grt.ver
 
 $(libdirsuffix)/libgrt.a: $(GRT_ADD_OBJS) grt/run-bind.o grt/main.o grt/grt-files
 	$(RM) -f $@
@@ -229,13 +247,15 @@ grt/grt-files.in: grt/grt-files
 
 $(libdirsuffix)/grt.lst: grt/grt-files.in
 	echo "@/libgrt.a" > $@
-ifdef GRT_EXTRA_LIB
 	for i in $(GRT_EXTRA_LIB); do echo $$i >> $@; done
-endif
 ifneq ($(LIBBACKTRACE),)
 	echo "@/libbacktrace.a" >> $@
 endif
 	cat $< >> $@
+
+$(libdirsuffix)/grt-exec.lst:
+	echo "# link options for executables" > $@
+	for i in $(GRT_EXEC_OPTS); do echo $$i >> $@; done
 
 $(libdirsuffix)/grt.ver: $(GRTSRCDIR)/grt.ver
 	cp $< $@

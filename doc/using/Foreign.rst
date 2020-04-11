@@ -15,7 +15,7 @@ Interfacing to other languages
 
 .. index:: VHPIDIRECT
 
-Interfacing with foreign languages through VHPIDIRECT is possible any platform.
+Interfacing with foreign languages through VHPIDIRECT is possible on any platform.
 You can define a subprogram in a foreign language (such as `C` or
 `Ada`) and import it into a VHDL design.
 
@@ -24,7 +24,13 @@ You can define a subprogram in a foreign language (such as `C` or
    inspect the hierarchy, set callbacks and/or assign signals. GHDL does not support VHPI. For these kind of features, it is
    suggested to use VPI instead (see :ref:`VPI_build_commands`).
 
+<<<<<<< HEAD
 .. _foreign_declarations:
+=======
+.. ATTENTION::
+  As a consequence of the runtime copyright, you are not allowed to distribute an executable produced by GHDL without allowing access to the VHDL sources. See :ref:`INTRO:Copyrights`.
+
+>>>>>>> origin/master
 
 Foreign declarations
 ====================
@@ -63,6 +69,9 @@ it won't be called, you can make it empty or simply put an assertion.
 The value of the attribute must start with ``VHPIDIRECT`` (an
 upper-case keyword followed by one or more blanks). The linkage name of the
 subprogram follows.
+
+The object file with the source code for the foreign subprogram must then be
+linked to GHDL, expanded upon in :ref:`Starting_a_simulation_from_a_foreign_program`.
 
 .. _Restrictions_on_foreign_declarations:
 
@@ -128,6 +137,12 @@ library.
 
 Note the :file:`c` library is always linked with an executable.
 
+.. HINT::
+  The process for personal code is the same, provided the code is compiled to an object file.
+  Analysis must be made of the HDL files, then elaboration with ``-e -Wl,personal.o [options...] primary_unit [secondary_unit]`` as arguments.
+  Additional object files are flagged separate ``-Wl,*`` arguments. The elaboration step will compile the executable with the custom resources.
+  Further reading (particularly about the backend particularities) is at :ref:`Elaboration:command` and :ref:`Run:command`.
+
 .. _Starting_a_simulation_from_a_foreign_program:
 
 Wrapping and starting a GHDL simulation from a foreign program
@@ -152,8 +167,17 @@ in Ada:
     return Integer;
   pragma import (C, Ghdl_Main, "ghdl_main");
 
+.. TIP::
+  Don't forget to list the object file(s) of this entry point and other foreign sources, as per :ref:`Linking_with_foreign_object_files`.
 
-This function must be called once, and returns 0 at the end of the simulation.
+.. ATTENTION::
+  This function must be called once, since reseting/restarting the simulation runtime is not supported yet (see :ghdlsharp:`1184`).
+
+.. HINT::
+  Immitating the run time flags, such as ``-gDEPTH=12`` from :option:`-gGENERIC`, requires the ``argv`` to have the executable's path at index 0, effectively shifting all other indicies along by 1. This can be taken from the 0 index of the ``argv`` passed to ``main()``, or (not suggested, despite a lack of consequences) left empty/null.
+
+  Since ``ghdl_main`` is the entrypoint to the design (GRT runtime), the supported CLI options are the ones shown in :ref:`USING:Simulation`. Options for analysis/elaboration are not required and will NOT work. See :option:`-r`.
+
 
 .. _Linking_with_Ada:
 
@@ -168,8 +192,8 @@ process is not trivial: you have to elaborate your program and your
 .. HINT::
    If the foreign language is C, this procedure is equivalent to the one described in
    :ref:`Linking_with_foreign_object_files`, which is easier. Thus, this procedure is
-   explained for didactic purposes. When suitable, we suggest to use ``-e`` instead
-   of ``--bind`` and ``--list-link``.
+   explained for didactic purposes. When suitable, we suggest to use :option:`-e`, instead
+   of :option:`--bind` and :option:`--list-link`.
 
 First, you have to analyze all your design files. In this example, we
 suppose there is only one design file, :file:`design.vhdl`.
@@ -200,12 +224,12 @@ in Ada:
 
   $ gnatmake my_prog -largs `ghdl --list-link design`
 
-See :ref:`gccllvm-only-programs` for further details about ``--bind`` and ``--list-link``.
+See :ref:`gccllvm-only-programs` for further details about :option:`--bind` and :option:`--list-link`.
 
-Dynamically loading foreign objects from GHDL
-=============================================
+Dynamically loading foreign objects from within GHDL
+====================================================
 
-Instead of linking and building foreign objects along with GHDL, it is also possible to load foreign resources dinamically.
+Instead of linking and building foreign objects along with GHDL, it is also possible to load foreign resources dynamically.
 In order to do so, provide the path and name of the shared library where the resource is to be loaded from. For example:
 
 .. code-block:: VHDL
@@ -221,7 +245,7 @@ that all the libraries and sources analyzed by GHDL generate position independen
 Furthermore, when the binary is built, argument ``-Wl,-pie`` needs to be provided.
 
 PIE binaries can be loaded and executed from any language that supports C-alike signatures and types
-(C, C++, golang, Python, Rust, etc.). For example:
+(C, C++, golang, Python, Rust, etc.). For example, in Python:
 
 .. code-block:: Python
 
@@ -246,6 +270,13 @@ PIE binaries can be loaded and executed from any language that supports C-alike 
 This allows seamless co-simulation using concurrent/parallel execution features available in each language:
 pthreads, goroutines/gochannels, multiprocessing/queues, etc. Moreover, it provides a mechanism to execute multiple
 GHDL simulations in parallel.
+
+.. TIP::
+    As explained in :ref:`Starting_a_simulation_from_a_foreign_program`, ``ghdl_main`` must be called once, since reseting/restarting the simulation runtime is not supported yet (see :ghdlsharp:`1184`). When it is loaded dynamically, this means that the binary file/library needs to be unloaded from memory and loaded again.
+
+.. ATTENTION::
+    By default, GHDL uses ``grt.ver`` to limit which symbols are exposed in the generated binary, and ``ghdl_main`` is not included. Hence, the version script needs to be removed, or a complementary script needs to be provided. Otherwise, it will not be possible to find the function easily. See :option:`--list-link` for further info.
+
 
 Using GRT from Ada
 ==================

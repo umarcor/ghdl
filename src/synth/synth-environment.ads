@@ -25,20 +25,33 @@ with Netlists; use Netlists;
 with Netlists.Builders;
 
 with Synth.Source;
+with Synth.Objtypes; use Synth.Objtypes;
 
 package Synth.Environment is
-   --  A simple signal/variable is either a bit or a std_ulogic
-   --  signal/variable, or a bus (bit_vector, std_ulogic_vector, signed,
-   --  unsigned...).
+   --  This package declares the type Wire_Id and its methods.
    --
-   --  Complex signals/variables (records, arrays) are decomposed to simple
-   --  signals/variables.
+   --  A wire_id represents an HDL signal or variable and keeps the current
+   --  value of it accross control statements.
+   --  This is not a memory storage, because:
+   --  * the current value may not be static.
+   --    e.g.:  a <= b + 1;  --  If B is a port, the value of A is defined but
+   --                        --  not known
+   --  * the current value depends on the control statements.
+   --    e.g.:  a := data;  -- a0
+   --           if cond then
+   --              a := a + 4;  --  Reads a0, but writes to a1
+   --              b := a + 1;  --  Reads a1, writes b1
+   --           else
+   --              b <= a + 2;  --  Reads a0, writes b2
+   --           end if;
+   --           c <= b * 2;     --  b = phi(cond, b1, b2)
    --
-   --  Each simple signal/variable is represented by a Wire_Id.  Synthesis
-   --  deals only with these wires or group of them.
+   --  This is very similar to SSA (static single assignments)
+
    type Wire_Id is private;
    No_Wire_Id : constant Wire_Id;
 
+   --  Wire_Id can be ordered, so that merges can be efficient.
    function Is_Lt (L, R : Wire_Id) return Boolean;
 
    --  A Wire is either a signal, a variable or a port.  We need to know the
@@ -52,22 +65,20 @@ package Synth.Environment is
       Wire_Input, Wire_Output, Wire_Inout
      );
 
-   type Seq_Assign is private;
-   No_Seq_Assign : constant Seq_Assign;
-
-   type Conc_Assign is private;
-   No_Conc_Assign : constant Conc_Assign;
-
    --  Create a wire.
-   function Alloc_Wire (Kind : Wire_Kind; Obj : Source.Syn_Src)
-                       return Wire_Id;
+   function Alloc_Wire (Kind : Wire_Kind; Obj : Source.Syn_Src) return Wire_Id;
 
    --  Mark the wire as free.
    procedure Free_Wire (Wid : Wire_Id);
 
+   --  Read and write the mark flag.
+   function Get_Wire_Mark (Wid : Wire_Id) return Boolean;
+   procedure Set_Wire_Mark (Wid : Wire_Id; Mark : Boolean := True);
+
    --  Simple mark & release.  This is a very simple mechanism (will free
    --  all wires allocated after the mark), but efficient and working well
    --  for the stack based allocation.
+   --  Not related to the mark flag.
    procedure Mark (M : out Wire_Id);
    procedure Release (M : in out Wire_Id);
 
@@ -78,34 +89,36 @@ package Synth.Environment is
    --  Used for internal wires (exit/quit) when exiting their scope.
    procedure Phi_Discard_Wires (Wid1 : Wire_Id; Wid2 : Wire_Id);
 
+   --  For signals, only the future value can be assigned.  But the current
+   --  value can be read.  A gate is needed to represent the current value
+   --  (as only a gate can provide a net).  In most cases, this is a virtual
+   --  gate whose output is equal to the input and this virtual gate would be
+   --  later removed during cleanup.
+   --
    --  Set the gate for a wire.
-   --  The gate represent the current value.  It is usually an Id_Signal.
    procedure Set_Wire_Gate (Wid : Wire_Id; Gate : Net);
    function Get_Wire_Gate (Wid : Wire_Id) return Net;
 
    --  The current value of WID.  For variables, this is the last assigned
-   --  value.  For signals, this is the initial value.
+   --  value.  For signals, this is the gate.
    --  A builder is needed in case of concatenation.
    function Get_Current_Value (Ctxt : Builders.Context_Acc; Wid : Wire_Id)
                               return Net;
 
+   --  Get the currently assigned value of WID at OFF/WD.
+   --  Used when assigning as a memory.
    function Get_Current_Assign_Value
      (Ctxt : Builders.Context_Acc; Wid : Wire_Id; Off : Uns32; Wd : Width)
      return Net;
 
-   --  Read and write the mark flag.
-   function Get_Wire_Mark (Wid : Wire_Id) return Boolean;
-   procedure Set_Wire_Mark (Wid : Wire_Id; Mark : Boolean := True);
+   --  In the current phi context, assign VAL to DEST.
+   procedure Phi_Assign_Net
+     (Ctxt : Builders.Context_Acc; Dest : Wire_Id; Val : Net; Offset : Uns32);
 
-   type Phi_Id is private;
-   No_Phi_Id : constant Phi_Id;
+   --  Assign a static value to DEST.  VAL is copied.
+   procedure Phi_Assign_Static (Dest : Wire_Id; Val : Memtyp);
 
-   function Get_Wire_Id (W : Seq_Assign) return Wire_Id;
-   function Get_Assign_Chain (Asgn : Seq_Assign) return Seq_Assign;
-
-   function Get_Assign_Value (Ctxt : Builders.Context_Acc; Asgn : Seq_Assign)
-                             return Net;
-
+   --  A Phi represent a split in the control flow (two or more branches).
    type Phi_Type is private;
 
    --  Create a new phi context.
@@ -132,27 +145,32 @@ package Synth.Environment is
                          T, F : Phi_Type;
                          Stmt : Source.Syn_Src);
 
+   --  Lower level part.
+   --  Currently public to handle case statements.
+
+   --  Within a Phi, assignments are represented as a linked list of
+   --  sequential assignments.
+   type Seq_Assign is private;
+   No_Seq_Assign : constant Seq_Assign;
+
    --  Sort all seq assign of P by wire id.  Used to more easily merge them.
    function Sort_Phi (P : Phi_Type) return Seq_Assign;
 
-   --  In the current phi context, assign VAL to DEST.
-   procedure Phi_Assign
-     (Ctxt : Builders.Context_Acc; Dest : Wire_Id; Val : Net; Offset : Uns32);
-
-   --  Get current phi context.
-   function Current_Phi return Phi_Id;
-   pragma Inline (Current_Phi);
-
-   procedure Add_Conc_Assign
-     (Wid : Wire_Id; Val : Net; Off : Uns32; Stmt : Source.Syn_Src);
-
-   procedure Finalize_Assignments (Ctxt : Builders.Context_Acc);
+   --  A sequential assignment represent an assignment to a wire.
+   function Get_Wire_Id (W : Seq_Assign) return Wire_Id;
+   function Get_Assign_Chain (Asgn : Seq_Assign) return Seq_Assign;
+   function Get_Assign_Value (Ctxt : Builders.Context_Acc; Asgn : Seq_Assign)
+                             return Net;
 
    --  For low-level phi merge.
+   --  A sequential assignment is a linked list of partial assignment.
    type Partial_Assign is private;
    No_Partial_Assign : constant Partial_Assign;
 
    function Get_Assign_Partial (Asgn : Seq_Assign) return Partial_Assign;
+
+   --  Force the value of a Seq_Assign to be a net if needed, return it.
+   function Get_Assign_Partial_Force (Asgn : Seq_Assign) return Partial_Assign;
 
    function New_Partial_Assign (Val : Net; Offset : Uns32)
                                return Partial_Assign;
@@ -165,7 +183,7 @@ package Synth.Environment is
    procedure Partial_Assign_Append (List : in out Partial_Assign_List;
                                     Pasgn : Partial_Assign);
    procedure Merge_Partial_Assigns (Ctxt : Builders.Context_Acc;
-                                    W : Wire_Id;
+                                    Wid : Wire_Id;
                                     List : in out Partial_Assign_List);
 
    --  P is an array of Partial_Assign.  Each element is a list
@@ -180,13 +198,23 @@ package Synth.Environment is
                                             Off : in out Uns32;
                                             Wd : out Width);
 
-   --  A const wire is a wire_signal which has one whole (same width as the
+   --  Concurrent assignments.
+
+   type Conc_Assign is private;
+   No_Conc_Assign : constant Conc_Assign;
+
+   procedure Add_Conc_Assign
+     (Wid : Wire_Id; Val : Net; Off : Uns32; Stmt : Source.Syn_Src);
+
+   procedure Finalize_Assignments (Ctxt : Builders.Context_Acc);
+
+   --  A static wire is a wire_signal which has one whole (same width as the
    --  wire) assignment and whose assignment value is a const net.
    --  That's rather restrictive but still efficient.
-   function Is_Const_Wire (Wid : Wire_Id) return Boolean;
+   function Is_Static_Wire (Wid : Wire_Id) return Boolean;
 
-   --  Return the corresponding net for a constant wire.
-   function Get_Const_Wire (Wid : Wire_Id) return Net;
+   --  Return the corresponding net for a static wire.
+   function Get_Static_Wire (Wid : Wire_Id) return Memtyp;
 private
    type Wire_Id is new Uns32;
    No_Wire_Id : constant Wire_Id := 0;
@@ -208,6 +236,10 @@ private
 
    type Phi_Id is new Uns32;
    No_Phi_Id : constant Phi_Id := 0;
+
+   --  Get current phi context.
+   function Current_Phi return Phi_Id;
+   pragma Inline (Current_Phi);
 
    type Wire_Id_Record is record
       --  Kind of wire: signal, variable...
@@ -239,6 +271,16 @@ private
       Nbr_Final_Assign : Natural;
    end record;
 
+   type Seq_Assign_Value (Is_Static : Boolean := True) is record
+      case Is_Static is
+         when True =>
+            Val : Memtyp;
+         when False =>
+            --  Values assigned.
+            Asgns : Partial_Assign;
+      end case;
+   end record;
+
    type Seq_Assign_Record is record
       --  Target of the assignment.
       Id : Wire_Id;
@@ -253,8 +295,8 @@ private
       --  Next wire in the phi context.
       Chain : Seq_Assign;
 
-      --  Values assigned.
-      Asgns : Partial_Assign;
+      --  Current value.
+      Val : Seq_Assign_Value;
    end record;
 
    type Partial_Assign_Record is record

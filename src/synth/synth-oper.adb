@@ -408,10 +408,9 @@ package body Synth.Oper is
          return Create_Value_Net (N, Expr_Typ);
       end Synth_Minmax;
 
-      function Synth_Compare_Array (Id, Id_Eq : Compare_Module_Id;
+      function Synth_Compare_Array (Id : Compare_Module_Id;
                                     Res_Type : Type_Acc) return Valtyp
       is
-         pragma Unreferenced (Id_Eq);
          N : Net;
       begin
          if Left.Typ.Kind = Type_Vector then
@@ -639,18 +638,20 @@ package body Synth.Oper is
          return No_Valtyp;
       end if;
       Left := Synth_Subtype_Conversion (Left, Left_Typ, False, Expr);
-      Strip_Const (Left);
       Right := Synth_Expression_With_Type (Syn_Inst, Right_Expr, Right_Typ);
       if Right = No_Valtyp then
          return No_Valtyp;
       end if;
       Right := Synth_Subtype_Conversion (Right, Right_Typ, False, Expr);
-      Strip_Const (Right);
 
       if Is_Static_Val (Left.Val) and Is_Static_Val (Right.Val) then
          return Synth_Static_Dyadic_Predefined
-           (Syn_Inst, Imp, Left, Right, Expr);
+           (Syn_Inst, Imp,
+            Get_Value_Memtyp (Left), Get_Value_Memtyp (Right), Expr);
       end if;
+
+      Strip_Const (Left);
+      Strip_Const (Right);
 
       case Def is
          when Iir_Predefined_Error =>
@@ -813,9 +814,11 @@ package body Synth.Oper is
             end if;
             return Synth_Compare (Id_Ne, Boolean_Type);
          when Iir_Predefined_Array_Greater =>
-            return Synth_Compare_Array (Id_Ugt, Id_Uge, Boolean_Type);
+            return Synth_Compare_Array (Id_Ugt, Boolean_Type);
+         when Iir_Predefined_Array_Greater_Equal =>
+            return Synth_Compare_Array (Id_Uge, Boolean_Type);
          when Iir_Predefined_Array_Less =>
-            return Synth_Compare_Array (Id_Ult, Id_Ule, Boolean_Type);
+            return Synth_Compare_Array (Id_Ult, Boolean_Type);
 
          when Iir_Predefined_Ieee_Numeric_Std_Add_Uns_Nat
            | Iir_Predefined_Ieee_Std_Logic_Unsigned_Add_Slv_Int =>
@@ -868,7 +871,8 @@ package body Synth.Oper is
             return Synth_Dyadic_Int_Sgn (Id_Sub, Left, Right, Expr);
          when Iir_Predefined_Ieee_Numeric_Std_Sub_Sgn_Sgn
            | Iir_Predefined_Ieee_Numeric_Std_Sub_Sgn_Log
-           | Iir_Predefined_Ieee_Numeric_Std_Sub_Log_Sgn =>
+           | Iir_Predefined_Ieee_Numeric_Std_Sub_Log_Sgn
+           | Iir_Predefined_Ieee_Std_Logic_Signed_Sub_Slv_Slv =>
             --  "-" (Signed, Signed)
             return Synth_Dyadic_Sgn_Sgn (Id_Sub, Left, Right, Expr);
 
@@ -1065,8 +1069,9 @@ package body Synth.Oper is
             end if;
             return Synth_Compare_Uns_Nat (Id_Ult, Expr_Typ);
          when Iir_Predefined_Ieee_Numeric_Std_Lt_Uns_Uns
+           | Iir_Predefined_Ieee_Numeric_Std_Match_Lt_Uns_Uns
            | Iir_Predefined_Ieee_Std_Logic_Unsigned_Lt_Slv_Slv
-           | Iir_Predefined_Ieee_Numeric_Std_Match_Lt_Uns_Uns =>
+           | Iir_Predefined_Ieee_Std_Logic_Arith_Lt_Uns_Uns =>
             --  "<" (Unsigned, Unsigned) [resize]
             return Synth_Compare_Uns_Uns (Id_Ult, Expr_Typ);
          when Iir_Predefined_Ieee_Numeric_Std_Lt_Nat_Uns
@@ -1140,8 +1145,9 @@ package body Synth.Oper is
             return Synth_Compare_Int_Sgn (Id_Sgt, Expr_Typ);
 
          when Iir_Predefined_Ieee_Numeric_Std_Ge_Uns_Uns
+           | Iir_Predefined_Ieee_Numeric_Std_Match_Ge_Uns_Uns
            | Iir_Predefined_Ieee_Std_Logic_Unsigned_Ge_Slv_Slv
-           | Iir_Predefined_Ieee_Numeric_Std_Match_Ge_Uns_Uns =>
+           | Iir_Predefined_Ieee_Std_Logic_Arith_Ge_Uns_Uns =>
             --  ">=" (Unsigned, Unsigned) [resize]
             return Synth_Compare_Uns_Uns (Id_Uge, Expr_Typ);
          when Iir_Predefined_Ieee_Numeric_Std_Ge_Nat_Uns
@@ -1293,7 +1299,10 @@ package body Synth.Oper is
             return Synth_Shift (Id_Asr, Id_None);
 
          when Iir_Predefined_Ieee_Numeric_Std_Sll_Uns_Int =>
-            return Synth_Shift (Id_Lsl, Id_None);
+            return Synth_Shift (Id_Lsl, Id_Lsr);
+
+         when Iir_Predefined_Ieee_Numeric_Std_Srl_Uns_Int =>
+            return Synth_Shift (Id_Lsr, Id_Lsl);
 
          when Iir_Predefined_Ieee_1164_Vector_Ror =>
             return Synth_Rotation (Id_Ror);
@@ -1356,7 +1365,7 @@ package body Synth.Oper is
 
       if Is_Static_Val (Operand.Val) then
          return Synth_Static_Monadic_Predefined
-           (Syn_Inst, Imp, Operand, Loc);
+           (Syn_Inst, Imp, Get_Value_Memtyp (Operand), Loc);
       end if;
 
       case Def is
@@ -1506,6 +1515,7 @@ package body Synth.Oper is
             return Synth_Conv_Vector (True);
          when Iir_Predefined_Ieee_Numeric_Std_Toint_Uns_Nat
            | Iir_Predefined_Ieee_Std_Logic_Arith_Conv_Integer_Uns
+           | Iir_Predefined_Ieee_Std_Logic_Arith_Conv_Integer_Log
            | Iir_Predefined_Ieee_Std_Logic_Unsigned_Conv_Integer =>
             --  UNSIGNED to Natural.
             return Create_Value_Net
@@ -1514,7 +1524,8 @@ package body Synth.Oper is
             --  SIGNED to Integer.
             return Create_Value_Net
               (Synth_Sresize (L, Res_Typ.W, Expr), Res_Typ);
-         when Iir_Predefined_Ieee_Numeric_Std_Resize_Uns_Nat =>
+         when Iir_Predefined_Ieee_Numeric_Std_Resize_Uns_Nat
+           | Iir_Predefined_Ieee_Std_Logic_Arith_Ext =>
             declare
                W : Width;
             begin
@@ -1527,7 +1538,8 @@ package body Synth.Oper is
                  (Synth_Uresize (Get_Net (L), W, Expr),
                   Create_Vec_Type_By_Length (W, Logic_Type));
             end;
-         when Iir_Predefined_Ieee_Numeric_Std_Resize_Sgn_Nat =>
+         when Iir_Predefined_Ieee_Numeric_Std_Resize_Sgn_Nat
+           | Iir_Predefined_Ieee_Std_Logic_Arith_Sxt =>
             declare
                W : Width;
             begin
@@ -1638,21 +1650,25 @@ package body Synth.Oper is
       Synth_Subprogram_Association
         (Subprg_Inst, Syn_Inst, Inter_Chain, Assoc_Chain);
 
-      --  If all operands are static, handle the call differently.
-      Static := True;
-      Inter := Inter_Chain;
-      while Inter /= Null_Node loop
-         if not Is_Static (Get_Value (Subprg_Inst, Inter).Val) then
-            Static := False;
-            exit;
-         end if;
-         Inter := Get_Chain (Inter);
-      end loop;
-
-      if Static then
-         Res := Synth_Static_Predefined_Function_Call (Subprg_Inst, Expr);
+      if Is_Error (Subprg_Inst) then
+         Res := No_Valtyp;
       else
-         Res := Synth_Dynamic_Predefined_Function_Call (Subprg_Inst, Expr);
+         --  If all operands are static, handle the call differently.
+         Static := True;
+         Inter := Inter_Chain;
+         while Inter /= Null_Node loop
+            if not Is_Static (Get_Value (Subprg_Inst, Inter).Val) then
+               Static := False;
+               exit;
+            end if;
+            Inter := Get_Chain (Inter);
+         end loop;
+
+         if Static then
+            Res := Synth_Static_Predefined_Function_Call (Subprg_Inst, Expr);
+         else
+            Res := Synth_Dynamic_Predefined_Function_Call (Subprg_Inst, Expr);
+         end if;
       end if;
 
       Free_Instance (Subprg_Inst);
