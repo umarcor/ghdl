@@ -24,13 +24,10 @@ You can define a subprogram in a foreign language (such as `C` or
    inspect the hierarchy, set callbacks and/or assign signals. GHDL does not support VHPI. For these kind of features, it is
    suggested to use VPI instead (see :ref:`VPI_build_commands`).
 
-<<<<<<< HEAD
 .. _foreign_declarations:
-=======
 .. ATTENTION::
   As a consequence of the runtime copyright, you are not allowed to distribute an executable produced by GHDL without allowing access to the VHDL sources. See :ref:`INTRO:Copyrights`.
 
->>>>>>> origin/master
 
 Foreign declarations
 ====================
