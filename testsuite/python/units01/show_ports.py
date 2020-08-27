@@ -31,23 +31,64 @@ def get_port_mode(port) -> str:
 
 def get_port_type(port) -> str:
     "Return the Type of a port, as a string"
+    kind = nodes.Get_Kind(port)
+    # print("kind:", kind, pyutils.kind_image(kind))
+
     subtype = nodes.Get_Subtype_Indication(port)
+    # print("subtype:", subtype)
+
     skind = nodes.Get_Kind(subtype)
 
     if skind == nodes.Iir_Kind.Simple_Name:
         return get_identifier_ptr(subtype)
 
     if skind == nodes.Iir_Kind.Array_Subtype_Definition:
-        mark = get_identifier_ptr(nodes.Get_Subtype_Type_Mark(subtype))
+        mark = nodes.Get_Subtype_Type_Mark(subtype)
+        # print("mark:", mark, pyutils.kind_image(nodes.Get_Kind(mark)))
 
-        for rng in pyutils.flist_iter(nodes.Get_Index_Constraint_List(subtype)):
+        # > Disp_Array_Element_Constraint
+
+        Def_El = nodes.Get_Element_Subtype(subtype)
+        # Tm_El = nodes.Get_Element_Subtype(mark)
+        has_index = nodes.Get_Index_Constraint_Flag(subtype)
+        # has_own_element_subtype = Def_El != Tm_El
+
+        # if not has_index and not has_own_element_subtype:
+        #    return "EMPTY"
+
+        # mark_state = nodes.Get_Constraint_State(mark)
+        # if mark_state != nodes.Iir_Constraint.Fully_Constrained and has_index:
+        #    Disp_Array_Sub_Definition_Indexes (Ctxt, Def)
+
+        # if has_own_element_subtype and (nodes.Get_Kind(Def_El) in nodes.Iir_Kinds.Composite_Type_Definition):
+        # > Disp_Element_Constraint (Ctxt, Def_El, Tm_El)
+        # Def_El_kind = nodes.Get_Kind(Def_El)
+        # if Def_El_kind == Iir_Kind.Record_Subtype_Definition:
+        #     #Disp_Record_Element_Constraint (Ctxt, Def)
+        # if Def_El_kind == Iir_Kind.Array_Subtype_Definition:
+        #     #Disp_Array_Element_Constraint (Ctxt, Def, Type_Mark);
+        # raise Exception("disp_element_constraint")
+
+        # > Disp_Array_Sub_Definition_Indexes
+
+        clist = nodes.Get_Index_Constraint_List(subtype)
+
+        for rng in pyutils.flist_iter(clist):
+            # > Disp_Discrete_Range
+            # > Disp_Range
             if nodes.Get_Kind(rng) == nodes.Iir_Kind.Range_Expression:
+                # nodes.Get_Direction(rng),  # Dir_To
+                # nodes.Get_Range_Origin(rng),
+                # nodes.Get_Left_Limit(rng),
+                # nodes.Get_Right_Limit(rng),
                 return "%s(%d %s %d)" % (
-                    mark,
+                    get_identifier_ptr(mark),
                     nodes.Get_Value(nodes.Get_Left_Limit_Expr(rng)),
                     "downto" if nodes.Get_Direction(rng) else "to",
                     nodes.Get_Value(nodes.Get_Right_Limit_Expr(rng)),
                 )
+            # if ...
+
             return "UNSUPPORTED array_subtype_definition"
 
     return "UNSUPPORTED"
