@@ -450,11 +450,7 @@ EOF
         ;;
       esac
 
-      if [ "x$ISGPL" != "xtrue" ]; then
-        tests+=" gna"
-      fi
-
-      tests+=" vests"
+      tests+=" gna vests"
 
       if [ "x$ISSYNTH" = "xtrue" ]; then
         tests+=" synth"
